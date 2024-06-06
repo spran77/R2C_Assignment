@@ -1,6 +1,6 @@
 Azure WebApp with SQL database flow diagram
 
-![Flow diagram](Images/flowdiagram.jpg)
+![Flow diagram](/Images/flowdiagram.jpg)
 
 The diagram illustrates the following components:
 
