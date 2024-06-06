@@ -1,10 +1,4 @@
-1. **Repositories**:
-
-- Service: Azure Repos (Git)
-- Purpose: Store code and manage version control
-- Configuration: Set up branching strategy (e.g., GitFlow) and pull request policies
-
-2. **Build Pipeline CI**:
+1. **Build Pipeline CI**:
 
 - Service: Azure Pipelines
 - Purpose: Build and test the application
@@ -15,6 +9,11 @@
 ```yml
 trigger:
   - main
+resources:
+  repositories:
+    - repository: self
+      type: git
+      name: <your-project-name>/<your-repo-name>
 
 pool:
   vmImage: "ubuntu-latest"
@@ -48,17 +47,26 @@ steps:
       artifactName: "drop"
 ```
 
-3. **Release Pipeline**:
+2. **Release Pipeline**:
 
 - Service: Azure Pipelines
 - Purpose: Deploy the application to different environments (e.g., Dev, Test, Prod)
 - Configuration: Stages for each environment
-  Use deployment slots for zero-downtime deployment
-  Configure approvals and gates for promoting releases
+  deployment slots for zero-downtime deployment
+  Configured approvals and gates for promoting releases
   Example YAML configuration for pipeline as code
 
 ```yml
 trigger: none
+
+resources:
+  pipelines:
+    - pipeline: buildPipeline # Name of the resource to be used in this pipeline
+      source: <your-build-pipeline-name> # Name of the build pipeline that produces the artifacts
+      trigger:
+        branches:
+          include:
+            - main
 
 stages:
   - stage: Staging

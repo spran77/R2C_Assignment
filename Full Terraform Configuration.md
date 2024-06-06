@@ -1,33 +1,3 @@
-All these resourses are can be deployed in azure portal using GUI and can be configured manually.
-
-1. **SQL Database**:
-
-- Service: Azure SQL Database
-- Purpose: Store application data
-- Configuration: Single Database or Elastic Pool depending on the load and usage patterns
-
-2. **Key Vault**:
-
-- Service: Azure Key Vault
-- Purpose: Store sensitive information like connection strings, API keys, and certificates
-- Configuration: Enable logging and access policies for applications and developers
-
-3. **Webapp Services**:
-
-- Service: Azure App Service
-- Purpose: Host the web application
-- Configuration: Use App Service Plan to scale the app and deploy multiple instances for high availability
-
-4. **Integration with External Services**:
-
-- Services: Azure API Management, Logic Apps, or Azure Functions
-- Purpose: Manage and secure APIs, orchestrate workflows, or run serverless functions to integrate with external services
-- Configuration: Configure API endpoints, security, and monitoring
-
-**These resources can also be deployed using terraform and the services can be configured**
-
-The below is the example terraform code
-
 ```hcl
 # provider.tf
 provider "azurerm" {
@@ -118,4 +88,67 @@ resource "azurerm_api_management_api" "example" {
   protocols           = ["https"]
 }
 
+# monitoring.tf
+resource "azurerm_log_analytics_workspace" "main" {
+  name                = "myLogAnalyticsWorkspace"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  sku                 = "PerGB2018"
+}
+
+resource "azurerm_application_insights" "main" {
+  name                = "myAppInsights"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  application_type    = "web"
+  workspace_id        = azurerm_log_analytics_workspace.main.id
+}
+
+resource "azurerm_monitor_diagnostic_setting" "app_service" {
+  name               = "diagAppService"
+  target_resource_id = azurerm_app_service.main.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+
+  log {
+    category = "AppServiceHTTPLogs"
+    enabled  = true
+    retention_policy {
+      enabled = true
+      days    = 30
+    }
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+    retention_policy {
+      enabled = true
+      days    = 30
+    }
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "sql_database" {
+  name               = "diagSqlDatabase"
+  target_resource_id = azurerm_sql_database.main.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+
+  log {
+    category = "SQLInsights"
+    enabled  = true
+    retention_policy {
+      enabled = true
+      days    = 30
+    }
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+    retention_policy {
+      enabled = true
+      days    = 30
+    }
+  }
+}
 ```
